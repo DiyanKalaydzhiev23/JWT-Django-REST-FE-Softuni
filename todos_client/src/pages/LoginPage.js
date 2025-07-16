@@ -18,7 +18,11 @@ const LoginPage = () => {
     const handleLogin = useCallback(
         async () => {
             await login(username, password);
-            setLoginSuccessful(true);
+            setTimeout(
+                () => {
+                    setLoginSuccessful(true);
+                }, 1000
+            )
         },
         [login, password, username]);
 
