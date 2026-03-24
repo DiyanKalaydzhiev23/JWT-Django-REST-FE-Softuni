@@ -1,7 +1,9 @@
 import {useEffect, useState} from "react";
-import {Box, Button, FormControl, MenuItem, Modal, Select, TextField} from "@mui/material";
+import {Box, Button, Chip, FormControl, InputLabel, MenuItem, Modal, OutlinedInput, Select, TextField} from "@mui/material";
 import {useTodos} from "../hooks/todos";
 import {useCategories} from "../hooks/categories";
+// STEP 18: Import useUsers to populate the assignee multi-select
+import {useUsers} from "../hooks/users";
 import styles from "./AddTodo.module.scss";
 
 const modalStyle = {
@@ -25,6 +27,12 @@ const AddTodo = () => {
         categories,
         loadCategories,
     } = useCategories();
+
+    // STEP 18: Fetch users for the assignee picker
+    const {
+        users,
+        loadUsers,
+    } = useUsers();
 
     const {
         createTodo,
@@ -50,6 +58,16 @@ const AddTodo = () => {
             })();
         },
         [loadCategories],
+    );
+
+    // STEP 18: Load users when the modal opens
+    useEffect(
+        () => {
+            (async () => {
+                await loadUsers();
+            })();
+        },
+        [loadUsers],
     );
 
     return (
@@ -91,6 +109,29 @@ const AddTodo = () => {
                                     <MenuItem key={id} value={id}>{name}</MenuItem>
                                 ))
                             }
+                        </Select>
+                    </FormControl>
+                    {/* STEP 18: Multi-select for choosing assignees */}
+                    <FormControl fullWidth margin='normal'>
+                        <InputLabel id="assignees-label">Assignees</InputLabel>
+                        <Select
+                            labelId="assignees-label"
+                            multiple
+                            value={todo.assignees || []}
+                            onChange={(ev) => changeTodoValue('assignees', ev.target.value)}
+                            input={<OutlinedInput label="Assignees" />}
+                            renderValue={(selected) => (
+                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                    {selected.map((userId) => {
+                                        const user = users.find(u => u.id === userId);
+                                        return <Chip key={userId} label={user ? user.username : userId} />;
+                                    })}
+                                </Box>
+                            )}
+                        >
+                            {users.map(({id, username}) => (
+                                <MenuItem key={id} value={id}>{username}</MenuItem>
+                            ))}
                         </Select>
                     </FormControl>
                     <FormControl fullWidth margin='normal'>

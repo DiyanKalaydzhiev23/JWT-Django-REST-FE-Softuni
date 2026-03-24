@@ -8,6 +8,8 @@ import IndexPage from "./pages/IndexPage";
 import LoginPage from "./pages/LoginPage";
 import StorageService from "./services/storage";
 import CategoriesProvider from "./hooks/categories";
+// STEP 16: Import the UsersProvider for assignee functionality
+import UsersProvider from "./hooks/users";
 
 const baseUrl = 'http://localhost:8000';
 
@@ -16,7 +18,9 @@ const App = () => {
 
     return (
         <ServicesProvider baseUrl={baseUrl}>
-            <AuthProvider initialIsLoggedIn={!!storageService.get('token')}>
+            <AuthProvider initialIsLoggedIn={!!storageService.get('accessToken')}>
+                {/* STEP 16: Wrap with UsersProvider so assignee data is available throughout the app */}
+                <UsersProvider>
                 <TodosProvider>
                     <CategoriesProvider>
                         <div className="App">
@@ -40,6 +44,7 @@ const App = () => {
                         </div>
                     </CategoriesProvider>
                 </TodosProvider>
+                </UsersProvider>
             </AuthProvider>
         </ServicesProvider>
     );

@@ -52,6 +52,17 @@ const TodosProvider = ({children}) => {
         [httpService, loadTodos, urlsService],
     );
 
+    // STEP 17: Update the assignees of a todo via PATCH and reload both detail and list
+    const updateTodoAssignees = useCallback(
+        async (id, assignees) => {
+            await httpService.patch(urlsService.getTodoUpdateUrl(id), { assignees });
+            // STEP 23: Reload both the detail (for the modal) and the list (for the assignee count in TodoItem)
+            await loadTodoDetails(id);
+            await loadTodos();
+        },
+        [httpService, loadTodoDetails, loadTodos, urlsService],
+    );
+
     const applyFilter = useCallback(
         ({state, category}) => {
             setQuery({state, category});
@@ -75,6 +86,7 @@ const TodosProvider = ({children}) => {
         loadTodoDetails,
         changeTodoState,
         createTodo,
+        updateTodoAssignees,
         applyFilter,
     };
 

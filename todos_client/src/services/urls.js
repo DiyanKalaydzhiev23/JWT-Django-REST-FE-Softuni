@@ -34,6 +34,16 @@ class UrlsService {
     getLogoutUrl() {
         return `${this.baseUrl}/auth/logout/`;
     }
+
+    // STEP 4: URL for refreshing an expired access token using the refresh token
+    getRefreshTokenUrl() {
+        return `${this.baseUrl}/auth/token/refresh/`;
+    }
+
+    // STEP 13: URL for fetching all users (used to populate the assignee picker)
+    getUsersListUrl() {
+        return `${this.baseUrl}/auth/users/`;
+    }
 }
 
 export default UrlsService;

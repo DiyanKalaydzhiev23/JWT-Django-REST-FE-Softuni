@@ -9,8 +9,9 @@ const useServices = () => useContext(ServicesContext);
 
 const ServicesProvider = ({children, baseUrl}) => {
     const storageService = new StorageService();
-    const httpService = new HttpService(storageService);
     const urlsService = new UrlsService(baseUrl);
+    // STEP 12: Pass the refresh token URL so HttpService can refresh expired access tokens automatically
+    const httpService = new HttpService(storageService, urlsService.getRefreshTokenUrl());
 
     const value = {
         httpService,

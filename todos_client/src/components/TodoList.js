@@ -1,7 +1,9 @@
 import {useCallback, useEffect, useState} from "react";
-import {Box, Button, Grid, Modal, Stack, Switch} from "@mui/material";
+import {Box, Button, Chip, FormControl, Grid, InputLabel, MenuItem, Modal, OutlinedInput, Select, Stack, Switch} from "@mui/material";
 import {useTodos} from "../hooks/todos";
 import {useCategories} from "../hooks/categories";
+// STEP 19: Import useUsers to display and edit assignees in the detail modal
+import {useUsers} from "../hooks/users";
 import TodoItem from "./TodoItem";
 
 const modalStyle = {
@@ -27,6 +29,7 @@ const TodosList = () => {
         todoDetails,
         applyFilter,
         changeTodoState,
+        updateTodoAssignees,
         loadTodoDetails,
     } = useTodos();
 
@@ -34,6 +37,12 @@ const TodosList = () => {
         categories,
         loadCategories,
     } = useCategories();
+
+    // STEP 19: Get users list for displaying/editing assignees in the detail modal
+    const {
+        users,
+        loadUsers,
+    } = useUsers();
 
     const handleChangeCategory = useCallback((id) => {
         setFilter({
@@ -56,12 +65,31 @@ const TodosList = () => {
         [changeTodoState],
     );
 
+    // STEP 19: Handler for updating assignees from the detail modal
+    const handleAssigneesChange = useCallback(
+        async (newAssigneeIds) => {
+            await updateTodoAssignees(todoDetails.id, newAssigneeIds);
+        },
+        [updateTodoAssignees, todoDetails],
+    );
+
     const renderModalContent = useCallback(() => {
             const {
                 title,
                 description,
                 state: isDone,
+                assignees: detailAssignees,
             } = todoDetails;
+
+            // STEP 22: Resolve assignee IDs by cross-referencing usernames with the users list,
+            //          since the detail endpoint returns user objects without an id field
+            const assigneeIds = (detailAssignees || []).map(a => {
+                if (typeof a === 'object') {
+                    const user = users.find(u => u.username === a.username);
+                    return user ? user.id : null;
+                }
+                return a;
+            }).filter(id => id != null);
 
             return (
                 <Box>
@@ -73,10 +101,48 @@ const TodosList = () => {
                     </p>
                     <Switch
                         checked={isDone} onChange={() => handleStateChange()}/>
+
+                    {/* STEP 19: Display current assignees as chips */}
+                    {detailAssignees && detailAssignees.length > 0 && (
+                        <Box sx={{ mt: 2 }}>
+                            <strong>Assignees:</strong>
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>
+                                {detailAssignees.map((a) => {
+                                    const label = typeof a === 'object' ? a.username : a;
+                                    const key = typeof a === 'object' ? a.id : a;
+                                    return <Chip key={key} label={label} />;
+                                })}
+                            </Box>
+                        </Box>
+                    )}
+
+                    {/* STEP 20: Edit assignees via multi-select in the detail modal */}
+                    <FormControl fullWidth sx={{ mt: 2 }}>
+                        <InputLabel id="detail-assignees-label">Edit Assignees</InputLabel>
+                        <Select
+                            labelId="detail-assignees-label"
+                            multiple
+                            value={assigneeIds}
+                            onChange={(ev) => handleAssigneesChange(ev.target.value)}
+                            input={<OutlinedInput label="Edit Assignees" />}
+                            renderValue={(selected) => (
+                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                    {selected.map((userId) => {
+                                        const user = users.find(u => u.id === userId);
+                                        return <Chip key={userId} label={user ? user.username : userId} />;
+                                    })}
+                                </Box>
+                            )}
+                        >
+                            {users.map(({id, username}) => (
+                                <MenuItem key={id} value={id}>{username}</MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
                 </Box>
             )
         },
-        [handleStateChange, todoDetails],
+        [handleStateChange, handleAssigneesChange, todoDetails, users],
     );
 
     useEffect(() => {
@@ -90,6 +156,13 @@ const TodosList = () => {
             await loadCategories();
         })();
     }, [loadCategories],);
+
+    // STEP 19: Load users for assignee display and editing
+    useEffect(() => {
+        (async () => {
+            await loadUsers();
+        })();
+    }, [loadUsers],);
 
     useEffect(() => {
         (() => {
